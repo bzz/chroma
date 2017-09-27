@@ -86,6 +86,32 @@ written in. There are three primary ways to do that:
     lexer := lexers.Analyse("package main\n\nfunc main()\n{\n}\n")
     ```
 
+
+lexers/api.go#Match("filename.ext")
+ for each lexer:
+		for _, glob := range lexer.Config().Filenames:
+			if fnmatch.Match(glob, filename, 0) { return lexer }
+
+// Analyse text content and return the "best" lexer..
+lexers/api.go#Analyse("content")
+ for each lexer:
+   lexer.(Analyser).AnalyseText("content")
+ > quick/quick.go  lexers.Analyse(source)
+
+// Pick attempts to pick the best Lexer for a piece of source code. May return nil.
+lexer.go#Lexers.Pick("content")
+ for each lexer:
+   lexer.(Analyser).AnalyseText("content")
+
+regexp.go#RegexLexer.AnalyseText("content")
+ r.analyser(text)
+
+regexp.go#RegexLexer.SetAnalyser()
+ > lexers/go.go   .SetAnalyser(func(text) float32 { ... })
+ > lexers/bash.go .SetAnalyser(func(text) {bashAnalyserRe.FindString(text) != ""})
+
+
+
 In all cases, `nil` will be returned if the langauge can not be identified.
 
 ```go
@@ -203,5 +229,4 @@ go get -u github.com/alecthomas/chroma/cmd/chroma
       regular expressions. These require time and effort to convert.
     - I mostly only converted languages I had heard of, to reduce the porting cost.
 - Some more esoteric features of Pygments are omitted for simplicity.
-- Though the Chroma API supports content detection, very few languages support them.
-  I have plans to implement a statistical analyser at some point, but not enough time.
+- Chroma API fo content detection is implemented using [Erny](https://github.com/src-d/enry)
